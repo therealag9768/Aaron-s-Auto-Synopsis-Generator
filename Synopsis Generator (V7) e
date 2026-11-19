@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Aaron's Auto Synopsis Generator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+    button:hover {
+    filter: brightness(0.85);
+}
+        body {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px;
+            background-color: WHITE;
+            margin: 10px;
+            padding: 20px 10px;
+        }
+        .container {
+            max-width: 1275px;
+            margin: 0 auto;
+            background: white;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow:
+            0px 2px 20px rgba(0,0,0,0.50),0 14px 200px rgba(0,0,0,0.08);
+        }
+        h1 {
+            color: #1e3a8a;
+            margin-bottom: 8px;
+        }
+        ul { list-style-type: disc; margin-left: 20px; margin-bottom: 5px; }
+        ol { margin-left: 20px; margin-top: 5px; margin-bottom: 5px; }
+        ol ol { list-style-type: lower-alpha; margin-left: 1px; margin-top: 0px; margin-bottom: 0px; }
+        ol li { padding-left: 5px; }
+        .scope-content { margin-top: 5px; }
+        .scope-content ul { margin-top: 5px; }
+        .multi-select-container { position: relative; display: inline-block; }
+        .multi-select-btn {
+            background: #FFF;
+            border: 1px solid #000000;
+            padding: px 10px;
+            border-radius: 2px;
+            cursor: pointer;
+            font-size:18px;
+            height:30px;
+        }
+        .multi-select-dropdown {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            padding: 0;
+            max-height: 575px;
+            overflow-y: auto;
+            z-index: 10;
+            width:405px;
+            min-width: 25%;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        /* Fixed Add Item button at the top of the dropdown */
+        .multi-select-dropdown .add-item-top {
+            background: #1e3a8a;
+            color: white;
+            padding: 1px 18px;
+            font-size: 17px;
+            height:30px;
+            border: none;
+            border-radius: 0;
+            cursor: pointer;
+            width: 100%;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            margin: 0;
+            border-bottom: 1px solid #ddd;
+            font-weight: 500;
+        }
+        .multi-select-dropdown .add-item-top:hover {
+            background: #1e40af;
+        }
+        .multi-select-dropdown .checkbox-container {
+            padding: 8px;
+        }
+        .multi-select-dropdown label { display: block; font-size:18px; padding: 4px 8px; }
+        .multi-select-dropdown input[type="checkbox"] {
+            transform: scale(1.4);
+            margin-right: 6px;
+            margin-left:6px;
+        }
+        #output {
+            background-color: #FFF;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 10px;
+            min-height: 300px;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 16px;
+            overflow: auto;
+        }
+        label[for="baselineMode"] {
+            font-family: 'Times New Roman', Times, serif;
+            font-weight: normal;
+            font-size: 16px;
+        }
+        #baselineMode { transform: scale(1.4); margin-left: 6px; }
+      #quantity {
+    width: 60px;
+    height: 30px; /* Desktop height */
+    font-size: 14px;
+    margin-bottom: 10px;
+    text-align: center;
+    box-sizing: border-box;
+    line-height: -1; /* prevents text from sitting low */
+    vertical-align: top;
+}
+#notesNum {
+    width: 60px;
+    height: 30px; /* Desktop height */
+    font-size: 14px;
+    padding: 4px 8px;
+    text-align: center;
+    box-sizing: border-box;
+    border: 1px solid
+    border-radius: 2px;
+    line-height: -1; /* prevents text from sitting low */
+    vertical-align: top;
+}
+@media (max-width: 768px) {
+    #quantity {
+        width: 100% !important;
+    }
+    #notesNum {
+        width: 100% !important;
+    }
+}
+        select { font-size: 18px; height:30px; }
+        button { font-size: 16px; }
+        #itemsList ul { list-style: none; padding-left: 0; }
+        #itemsList li { display: flex; align-items: baseline; gap: 6px; }
+        #itemsList .item-left { display: inline-flex; align-items: baseline; gap: 4px; flex-shrink: 0; white-space: nowrap; margin-top: 0; }
+        #itemsList .bullet { font-size: 18px; line-height: 1; position: relative; top: -0.5px; }
+        #itemsList .qty { position: relative; top:-1px; }
+        #itemsList .item-text { flex: 1; min-width: 0; word-break: break-word; }
+        #itemsList button:hover { background-color: #b0868a; }
+        @media (max-width: 768px) {
+            body { font-size: 16px; margin: 5px; padding: 0 5px; }
+            .multi-select-btn { min-width: 100%; font-size: 14px; }
+            #procedureDropdown { width: 100% !important; max-height:300px; }
+            select, input[type="number"], button { font-size: 14px; width: 100%; box-sizing: border-box; margin-bottom: 10px; }
+            #itemsList li { flex-wrap: nowrap; }
+            #itemsList .item-left button { width: 28px; height: 28px; min-width: 28px; min-height: 28px; padding: 0; font-size: 16px; }
+            #itemsList .bullet { position: relative; top: 1px; }
+            #itemsList .qty { position: relative; top: -1px; }
+            #itemsList .item-text { line-height: 1.35; }
+        }
+        /* Fix Procedures label + button stacking on zoom / mobile */
+@media (max-width: 768px) {
+    label[for="suffix"],
+    label[for="type"],
+    label[for="quantity"] {
+        display: block;
+        margin-bottom: 4px;
+    }
+    .multi-select-container {
+        display: block;
+        width: 100%;
+        margin-bottom: 12px;
+    }
+    .multi-select-btn {
+        width: 100% !important;
+        margin-top: 4px;
+    }
+    @media (max-width: 768px) {
+    .container {
+        padding-top: 15px; /* was 25px — this reduces the top gap */
+        padding-bottom: 15px;
+        padding-left: 12px;
+        padding-right: 12px;
+    }
+}
+/* Number of notes input box */
+#notesNum {
+    width: 70px; /* makes it full width */
+    height: 30px; /* ← Change this number for height */
+    font-size: 18px;
+    padding: 12px 12px;
+    text-align: center;
+    box-sizing: border-box;
+    border: 1px solid #999;
+    border-radius: 2px;
+}
+/* Make all form labels bigger and consistent */
+label {
+    font-size: 20px; /* Bigger on desktop */
+    font-weight: normal;
+    display: block;
+}
+/* Make them even larger when zoomed / mobile */
+@media (max-width: 768px) {
+    label {
+        font-size: 20px; /* Nice big labels on phone/zoomed view */
+    }
+    /* Center header and sub-header text on mobile/zoomed view */
+@media (max-width: 768px) {
+    h1 {
+        text-align: center;
+    }
+   
+    p[style*="color:#666"] {
+        text-align: center;
+        margin-bottom: 18px;
+    }
+}
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Synopsis Generator</h1>
+       <p style="color:#666; margin-bottom:25px;">This application generates a synopsis based on added HVAC items. Add items by type, quantity, scope, procedures, then generate.</p>
+        <p style="color:#666; margin-bottom:25px;">Created and coded by Aaron Griffin. (V7) </p>
+        <h2></h2>
+        <label for="quantity">𝐐𝐮𝐚𝐧𝐭𝐢𝐭𝐲:</label>
+        <input type="number" id="quantity" min="1" value="1">
+        <label for="type">𝐈𝐭𝐞𝐦 𝐓𝐲𝐩𝐞:</label>
+        <select id="type">
+            <option value="ach/pressurization">ACH/Pressurization</option>
+            <option value="ahu">AHU</option>
+            <option value="boiler">Boiler</option>
+            <option value="chiller">Chiller</option>
+            <option value="chilled beam">Chilled beam</option>
+            <option value="coil_test">Coil test</option>
+            <option value="cooling_tower">Cooling tower</option>
+            <option value="doas">DOAS</option>
+            <option value="ductless split system">Ductless split system</option>
+            <option value="eru">ERU</option>
+            <option value="erv">ERV</option>
+            <option value="exhaust_fan">Exhaust fan</option>
+            <option value="exhaust_inlet">Exhaust inlet</option>
+            <option value="fcu">FCU</option>
+            <option value="heat_exchanger">Heat exchanger</option>
+            <option value="hp">HP</option>
+            <option value="hru">HRU</option>
+            <option value="hydronic_balance_valve">Hydronic balance valve</option>
+            <option value="hydronic_pump">Hydronic Pump</option>
+            <option value="mau">MAU</option>
+            <option value="return_fan">Return fan</option>
+            <option value="return_inlet">Return inlet</option>
+            <option value="rtu">RTU</option>
+            <option value="scu">SCU</option>
+            <option value="supply_fan">Supply fan</option>
+            <option value="supply_outlet">Supply outlet</option>
+            <option value="terminal_unit">Terminal unit</option>
+            <option value="traverse">Traverse</option>
+            <option value="unit heater">Unit heater</option>
+        </select>
+        <label for="suffix">𝐒𝐜𝐨𝐩𝐞:</label>
+        <select id="suffix">
+            <option value="none">None</option>
+            <option value="partial">as a partial system balance</option>
+            <option value="associated">and associated distribution</option>
+        </select>
+         <label>𝐏𝐫𝐨𝐜𝐞𝐝𝐮𝐫𝐞𝐬:</label>
+        <div class="multi-select-container">
+            <button type="button" id="procedureBtn" class="multi-select-btn" onclick="toggleMultiSelect()">Select Procedures ▼ </button>
+            <div id="procedureDropdown" class="multi-select-dropdown">
+                <!-- Fixed Add Item button at the top -->
+                <button onclick="addItemFromDropdown()" class="add-item-top">
+                    ➕ Add Item
+                </button>
+                <div class="checkbox-container">
+                  ⬇️𝐀𝐈𝐑
+                    <label><input type="checkbox" value="Air temperatures measured by hygrometer"> Air temperatures measured by hygrometer</label>
+                    <label><input type="checkbox" value="Balanced by flow hood"> Balanced by flow hood</label>
+                    <label><input type="checkbox" value="Balanced and calibrated by flow hood"> Balanced and calibrated by flow hood</label>
+                    <label><input type="checkbox" value="Balanced by duct traverse"> Balanced by duct traverse</label>
+                    <label><input type="checkbox" value="Balanced by velgrid traverse"> Balanced by velgrid traverse</label>
+                    <label><input type="checkbox" value="Balanced by anemometer"> Balanced by anemometer</label>
+                    <label><input type="checkbox" value="Balanced by flow hood, duct traverse, and or by velgrid traverse as needed"> Balanced by flow hood, duct traverse, and or by velgrid traverse as needed</label>
+                    <label><input type="checkbox" value="Calibrated by duct traverse"> Calibrated by duct traverse</label>
+                    <label><input type="checkbox" value="Calibrated by measuring pick up tube differential and calculating CFM using the manufacturer flow chart"> Calibrated by measuring pick up tube differential and calculating CFM using the manufacturer flow chart</label>
+                    <label><input type="checkbox" value="CFM determined using manufacturer submittal"> CFM determined using manufacturer submittal</label>
+                    <label><input type="checkbox" value="Measured by flow hood"> Measured by flow hood</label>
+                    <label><input type="checkbox" value="Measured by duct traverse"> Measured by duct traverse</label>
+                    <label><input type="checkbox" value="Measured by velgrid traverse"> Measured by velgrid traverse</label>
+                    <label><input type="checkbox" value="Measured by anemometer"> Measured by anemometer</label>
+                    <label><input type="checkbox" value="Measured by flow hood, duct traverse, and or by velgrid traverse as needed"> Measured by flow hood, duct traverse, and or by velgrid traverse as needed</label>
+                    <label><input type="checkbox" value="Static pressures measured using an air meter"> Static pressures measured using an air meter</label>
+                    <label><input type="checkbox" value="Outside air balanced by duct traverse"> Outside air balanced by duct traverse</label>
+                    <label><input type="checkbox" value="Outside air balanced by velgrid traverse"> Outside air balanced by velgrid traverse</label>
+                    <label><input type="checkbox" value="Outside air balanced by subtracting supply and return"> Outside air balanced by subtracting supply and return</label>
+                    <label><input type="checkbox" value="Outside air balanced by air temperature calculation"> Outside air balanced by air temperature calculation</label>
+                  ⬇️𝐖𝐀𝐓𝐄𝐑
+                    <label><input type="checkbox" value="GPM was determined using a water meter and manufacturer submittal"> GPM was determined using a water meter and manufacturer submittal</label>
+                    <label><input type="checkbox" value="GPM was balanced using a water meter and manufacturer submittal"> GPM was balanced using a water meter and manufacturer submittal</label>
+                    <label><input type="checkbox" value="GPM was balanced / determined by measuring differential pressure and calculated using manufacturer submittal"> GPM was balanced / determined by measuring differential pressure and calculated using manufacturer submittal</label>
+                    <label><input type="checkbox" value="GPM was balanced / determined by measuring temperature differential and calculated using manufacturer submittal"> GPM was balanced / determined by measuring temperature differential and calculated using manufacturer submittal</label>
+                    <label><input type="checkbox" value="Water temperatures measured by temperature probe"> Water temperature measured by temperature probe</label>
+                    <label><input type="checkbox" value="Water temperatures recorded from temperature gauges"> Water temperatures recorded from temperature gauges</label>
+                    <label><input type="checkbox" value="Water temperatures taken from digital screen read out"> Water temperatures taken from digital screen read out</label>
+                </div>
+            </div>
+        </div>
+  
+        <div id="itemsList"></div>
+         <h2></h2>
+<h2></h2><label for="baselineMode" style="font-size: 19px; font-weight: bold; margin-left: 0px;">
+    Baseline Report?
+    <input type="checkbox" id="baselineMode" style="transform: scale(1.4); margin-left: 8px;">
+</label><h2></h2>
+        <label>𝐀𝐝𝐝 𝐫𝐞𝐬𝐮𝐥𝐭𝐬:</label>
+        <input type="number" id="notesNum" min="0" value="0">
+       <button onclick="generateSynopsis()" style="background: #1e3a8a; color: white;height:30px;border-radius: 2px;">Generate Synopsis</button>
+       <button onclick="copySynopsis()" style="background: #6c757d; color: white;height:30px;border-radius: 2px;">Copy Synopsis</button>
+        <div id="output" contenteditable="true"></div>
+  
+        <p style="font-size: 14px; color: #555; margin-top: 8px; display: flex; align-items: center; gap: 12px;">
+            NOTE: Items and synopsis auto save. Refreshing the page will restore both. Add item button may add previous items. Clear all to start over.
+            <button onclick="clearAllData()" style="font-size: 14px; padding: 4px 10px; background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; height:30px; border-radius: 4px; cursor: pointer;">
+                Clear All
+            </button>
+        </p>
+    </div>
+
+    <script>
+        /* === YOUR CURRENT SCRIPT WITH EXPIRATION ADDED === */
+
+        // ==================== EXPIRATION DATE PROTECTION ====================
+        // This app will stop working after December 31, 2026
+        const EXPIRATION_DATE = new Date("2026-12-31");
+
+        function checkExpiration() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);   // Ignore time of day
+
+            if (today > EXPIRATION_DATE) {
+                document.body.innerHTML = `
+                    <div style="max-width:800px; margin:100px auto; padding:40px; text-align:center; font-family:'Times New Roman', serif; background:#fff; border:3px solid #dc3545; border-radius:8px; box-shadow:0 4px 20px rgba(0,0,0,0.2);">
+                        <h1 style="color:#dc3545; font-size:32px;">This version has expired</h1>
+                        <p style="font-size:20px; margin:30px 0 20px;">Please contact Aaron Griffin for an updated version of the Synopsis Generator.</p>
+                        <p style="font-size:18px; color:#555;">Expiration Date: December 31, 2026</p>
+                    </div>
+                `;
+                return true; // expired
+            }
+            return false; // still valid
+        }
+
+        const itemTypes = {
+            "ach/pressurization": { scopeNameSingular: "ACH/Pressurization", scopeNamePlural: "ACHs/Pressurizations", procedureNameSingular: "ACH/Pressurization", procedureNamePlural: "ACHs/Pressurizations" },
+            "ahu": { scopeNameSingular: "AHU", scopeNamePlural: "AHUs", procedureNameSingular: "AHU", procedureNamePlural: "AHUs" },
+            "boiler": { scopeNameSingular: "Boiler", scopeNamePlural: "Boilers", procedureNameSingular: "Boiler", procedureNamePlural: "Boilers" },
+            "chiller": { scopeNameSingular: "Chiller", scopeNamePlural: "Chillers", procedureNameSingular: "Chiller", procedureNamePlural: "Chillers" },
+            "chilled beam": { scopeNameSingular: "Chilled beam", scopeNamePlural: "Chilled beams", procedureNameSingular: "Chilled beam", procedureNamePlural: "Chilled beams" },
+            "coil_test": { scopeNameSingular: "Coil test", scopeNamePlural: "Coil tests", procedureNameSingular: "Coil test", procedureNamePlural: "Coil tests" },
+            "cooling_tower": { scopeNameSingular: "Cooling tower", scopeNamePlural: "Cooling towers", procedureNameSingular: "Cooling tower", procedureNamePlural: "Cooling towers" },
+            "doas": { scopeNameSingular: "DOAS", scopeNamePlural: "DOAS units", procedureNameSingular: "DOAS", procedureNamePlural: "DOAS units" },
+            "ductless split system": { scopeNameSingular: "Ductless split system", scopeNamePlural: "Ductless split systems", procedureNameSingular: "Ductless split system", procedureNamePlural: "Ductless split systems" },
+            "eru": { scopeNameSingular: "ERU", scopeNamePlural: "ERUs", procedureNameSingular: "ERU", procedureNamePlural: "ERUs" },
+            "erv": { scopeNameSingular: "ERV", scopeNamePlural: "ERVs", procedureNameSingular: "ERV", procedureNamePlural: "ERVs" },
+            "exhaust_fan": { scopeNameSingular: "Exhaust fan", scopeNamePlural: "Exhaust fans", procedureNameSingular: "Exhaust fan", procedureNamePlural: "Exhaust fans" },
+            "exhaust_inlet": { scopeNameSingular: "Exhaust inlet", scopeNamePlural: "Exhaust inlets", procedureNameSingular: "Exhaust inlet", procedureNamePlural: "Exhaust inlets" },
+             "fcu": { scopeNameSingular: "FCU", scopeNamePlural: "FCUs", procedureNameSingular: "FCU", procedureNamePlural: "FCUs" },
+             "hp": { scopeNameSingular: "HP", scopeNamePlural: "HPs", procedureNameSingular: "HP", procedureNamePlural: "HPs" },
+             "hru": { scopeNameSingular: "HRU", scopeNamePlural: "HRUs", procedureNameSingular: "HRU", procedureNamePlural: "HRUs" },
+            "hydronic_balance_valve": { scopeNameSingular: "Hydronic balance valve", scopeNamePlural: "Hydronic balance valves", procedureNameSingular: "Hydronic balance valve", procedureNamePlural: "Hydronic balance valves" },
+             "mau": { scopeNameSingular: "MAU", scopeNamePlural: "MAUs", procedureNameSingular: "MAU", procedureNamePlural: "MAUs" },
+            "supply_fan": { scopeNameSingular: "Supply fan", scopeNamePlural: "Supply fans", procedureNameSingular: "Supply fan", procedureNamePlural: "Supply fans" },
+            "heat_exchanger": { scopeNameSingular: "Heat exchanger", scopeNamePlural: "Heat exchangers", procedureNameSingular: "Heat exchanger", procedureNamePlural: "Heat exchangers" },
+            "hydronic_pump": { scopeNameSingular: "Hydronic Pump", scopeNamePlural: "Hydronic Pumps", procedureNameSingular: "Hydronic Pump", procedureNamePlural: "Hydronic Pumps" },
+            "terminal_unit": { scopeNameSingular: "Terminal unit", scopeNamePlural: "Terminal units", procedureNameSingular: "Terminal unit", procedureNamePlural: "Terminal units" },
+            "return_fan": { scopeNameSingular: "Return fan", scopeNamePlural: "Return fans", procedureNameSingular: "Return fan", procedureNamePlural: "Return fans" },
+            "return_inlet": { scopeNameSingular: "Return inlet", scopeNamePlural: "Return inlets", procedureNameSingular: "Return inlet", procedureNamePlural: "Return inlets" },
+            "rtu": { scopeNameSingular: "RTU", scopeNamePlural: "RTUs", procedureNameSingular: "RTU", procedureNamePlural: "RTUs" },
+            "scu": { scopeNameSingular: "SCU", scopeNamePlural: "SCUs", procedureNameSingular: "SCU", procedureNamePlural: "SCUs" },
+            "supply_fan": { scopeNameSingular: "Supply fan", scopeNamePlural: "Supply fans", procedureNameSingular: "Supply fan", procedureNamePlural: "Supply fans" },
+            "supply_outlet": { scopeNameSingular: "Supply outlet", scopeNamePlural: "Supply outlets", procedureNameSingular: "Supply outlet", procedureNamePlural: "Supply outlets" },
+            "traverse": { scopeNameSingular: "Traverse", scopeNamePlural: "Traverses", procedureNameSingular: "Traverse", procedureNamePlural: "Traverses" },
+            "unit heater": { scopeNameSingular: "Unit heater", scopeNamePlural: "Unit heaters", procedureNameSingular: "Unit heater", procedureNamePlural: "Unit heaters" },
+        };
+        const suffixOptions = {
+            "none": "",
+            "partial": "as a partial system balance",
+            "associated": "and associated distribution"
+        };
+        let items = [];
+        let saveTimeout = null;
+        function toggleMultiSelect() {
+            const dropdown = document.getElementById("procedureDropdown");
+            dropdown.style.display = dropdown.style.display === "block" ? "none" : "block";
+        }
+        function getSelectedProcedures() {
+            return Array.from(document.querySelectorAll('#procedureDropdown input[type="checkbox"]:checked'))
+                        .map(cb => cb.value);
+        }
+        function updateProcedureButton() {
+            const count = getSelectedProcedures().length;
+            document.getElementById("procedureBtn").textContent =
+                count > 0 ? `Selected (${count}) ▼` : "Select Procedures ▼";
+        }
+        document.addEventListener("click", function(e) {
+            if (!e.target.closest(".multi-select-container")) {
+                document.getElementById("procedureDropdown").style.display = "none";
+            }
+        });
+        document.querySelectorAll('#procedureDropdown input[type="checkbox"]').forEach(cb => {
+            cb.addEventListener("change", updateProcedureButton);
+        });
+        function addItem() {
+            const type = document.getElementById('type').value;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const suffix = document.getElementById('suffix').value;
+            const selectedMethods = getSelectedProcedures();
+            if (quantity > 0 && itemTypes[type]) {
+                items.push({ type, quantity, suffix, methods: selectedMethods });
+                displayItems();
+                saveItems();
+                document.getElementById("procedureDropdown").style.display = "none";
+                document.querySelectorAll('#procedureDropdown input[type="checkbox"]').forEach(cb => cb.checked = false);
+                updateProcedureButton();
+            } else {
+                alert('Please select a valid type and enter a positive quantity.');
+            }
+        }
+        // Function for the fixed Add Item button inside dropdown
+        function addItemFromDropdown() {
+            addItem();
+            document.getElementById("procedureDropdown").style.display = "none";
+        }
+        function displayItems() {
+            const list = document.getElementById('itemsList');
+            list.innerHTML = '<h3>Added Items:</h3><ul><ul>' +
+                items.map((item, idx) =>
+`<li>
+    <span class="item-left">
+        <button onclick="removeItem(${idx})">❌</button>
+        <span class="bullet">•</span>
+        <span class="qty">(${item.quantity})</span>
+    </span>
+    <span class="item-text">
+        ${itemTypes[item.type].scopeNamePlural}${suffixOptions[item.suffix] ? ' ' + suffixOptions[item.suffix] : ''}${item.methods.length > 0 ? ' with methods: ' + item.methods.join(', ') : ''}
+    </span>
+</li>`
+                ).join('') + '</ul>';
+        }
+        function removeItem(idx) {
+            items.splice(idx, 1);
+            displayItems();
+            saveItems();
+        }
+        function saveItems() {
+            localStorage.setItem('savedItems', JSON.stringify(items));
+        }
+        function loadItems() {
+            const saved = localStorage.getItem('savedItems');
+            if (saved) {
+                items = JSON.parse(saved);
+                displayItems();
+            }
+        }
+        function saveOutput() {
+            const output = document.getElementById('output');
+            if (output) {
+                localStorage.setItem('synopsisContent', output.innerHTML);
+            }
+        }
+        function loadOutput() {
+            const saved = localStorage.getItem('synopsisContent');
+            const output = document.getElementById('output');
+            if (saved && output) {
+                output.innerHTML = saved;
+            }
+        }
+        function clearAllData() {
+            if (confirm("Are you sure you want to clear all items and synopsis?\n\nThis action cannot be undone.")) {
+                items = [];
+                document.getElementById('itemsList').innerHTML = '<h3>Added Items:</h3><ul></ul>';
+                document.getElementById('output').innerHTML = '';
+                localStorage.removeItem('savedItems');
+                localStorage.removeItem('synopsisContent');
+                alert("All data has been cleared.");
+            }
+        }
+        function generateSynopsis() {
+            if (items.length === 0) {
+                alert('Please add at least one item.');
+                return;
+            }
+            const isBaselineMode = document.getElementById('baselineMode').checked;
+            const scopeGrouped = {};
+            items.forEach(item => {
+                const key = item.type + '_' + item.suffix;
+                if (!scopeGrouped[key]) {
+                    scopeGrouped[key] = { type: item.type, suffix: item.suffix, quantity: 0 };
+                }
+                scopeGrouped[key].quantity += item.quantity;
+            });
+            const procedureGroups = {};
+            items.forEach(item => {
+                const sortedMethods = item.methods.slice().sort((a, b) => a.charAt(0).localeCompare(b.charAt(0)));
+                const methodsKey = sortedMethods.join('|');
+                const key = item.type + '|' + methodsKey;
+                if (!procedureGroups[key]) {
+                    procedureGroups[key] = { type: item.type, methods: sortedMethods, quantity: 0 };
+                }
+                procedureGroups[key].quantity += item.quantity;
+            });
+            let scope = '<u>Scope</u>:<br><div class="scope-content">';
+            scope += isBaselineMode
+                ? 'The scope of our work is to provide baseline testing of the installed HVAC systems for this project. The following equipment is included:<br><ul>'
+                : 'The scope of our work is to provide testing, adjusting, and balancing of the installed HVAC systems for this project. The following equipment is included:<br><ul>';
+            for (let key in scopeGrouped) {
+                const group = scopeGrouped[key];
+                const item = itemTypes[group.type];
+                const baseName = group.quantity === 1 ? item.scopeNameSingular : item.scopeNamePlural;
+                const fullName = baseName + (suffixOptions[group.suffix] ? ' ' + suffixOptions[group.suffix] : '');
+                scope += `<li>(${group.quantity}) ${fullName}</li>`;
+            }
+            scope += '</ul></div>';
+            let procedures = '<u>Procedures</u>:<br><ol>';
+            for (let key in procedureGroups) {
+                const group = procedureGroups[key];
+                const item = itemTypes[group.type];
+                const baseName = group.quantity === 1 ? item.procedureNameSingular : item.procedureNamePlural;
+                procedures += `<li>${baseName}:<ol type="a">`;
+                group.methods.forEach(method => procedures += `<li>${method}</li>`);
+                procedures += `</ol></li>`;
+            }
+            procedures += '</ol>';
+            let results = '<u>Results</u>:<br><ol>';
+            const notesNum = parseInt(document.getElementById('notesNum').value) || 0;
+            if (notesNum > 0) {
+                const types = [...new Set(items.map(item => item.type))];
+                for (let i = 1; i <= notesNum; i++) {
+                    const typeIdx = (i - 1) % types.length;
+                    const typeName = itemTypes[types[typeIdx]].procedureNameSingular;
+                    results += `<li>${typeName}:<ol type="a"><li></li></ol></li>`;
+                }
+            }
+            results += '</ol>';
+            results += isBaselineMode
+                ? 'All equipment within scope was tested unless noted otherwise. See individual equipment notes for details.'
+                : notesNum === 0
+                    ? 'All equipment is within design tolerance unless noted otherwise. See individual equipment notes for details.'
+                    : 'All other equipment is within design tolerance unless noted otherwise. See individual equipment notes for details.';
+            document.getElementById('output').innerHTML = '<h2></h2>' + scope + procedures + results;
+      
+            setTimeout(saveOutput, 100);
+            document.getElementById('output').focus();
+        }
+        function copySynopsis() {
+            const output = document.getElementById('output');
+            if (!output.innerHTML.trim()) {
+                alert('No synopsis to copy. Please generate the synopsis first.');
+                return;
+            }
+            function htmlToFormattedText(element) {
+                let text = '';
+                const nodes = element.childNodes;
+                nodes.forEach(node => {
+                    if (node.nodeType === 3) {
+                        const content = node.textContent.trim();
+                        if (content && !node.parentNode.closest('li')) text += content + '\n';
+                    } else if (node.nodeName === 'BR') text += '\n';
+                    else if (node.nodeName === 'U') {
+                        const content = node.textContent.trim();
+                        if (content) text += content + '\n';
+                    } else if (node.nodeName === 'UL') {
+                        node.querySelectorAll('li').forEach(item => text += `• ${item.textContent.trim()}\n`);
+                    } else if (node.nodeName === 'OL') {
+                        const listItems = node.querySelectorAll(':scope > li');
+                        if (node.getAttribute('type') === 'a') {
+                            listItems.forEach((item, index) => text += ` ${String.fromCharCode(97 + index)}. ${item.textContent.trim()}\n`);
+                        } else {
+                            listItems.forEach((item, index) => {
+                                let mainText = '';
+                                for (let child of item.childNodes) {
+                                    if (child.nodeType === 3 && child.textContent.trim()) mainText += child.textContent.trim();
+                                }
+                                if (mainText) text += `${index + 1}. ${mainText}\n`;
+                                const subOl = item.querySelector('ol[type="a"]');
+                                if (subOl) {
+                                    subOl.querySelectorAll('li').forEach((subItem, subIndex) => {
+                                        text += ` ${String.fromCharCode(97 + subIndex)}. ${subItem.textContent.trim()}\n`;
+                                    });
+                                }
+                            });
+                        }
+                    } else if (node.nodeName !== 'H2') {
+                        text += htmlToFormattedText(node);
+                    }
+                });
+                return text.trim().replace(/\n{2,}/g, '\n');
+            }
+            try {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = output.innerHTML;
+                tempDiv.style.position = 'absolute';
+                tempDiv.style.left = '-9999px';
+                tempDiv.style.backgroundColor = 'transparent';
+                document.body.appendChild(tempDiv);
+                const range = document.createRange();
+                range.selectNodeContents(tempDiv);
+                const selection = window.getSelection();
+                selection.removeAllRanges();
+                selection.addRange(range);
+                const success = document.execCommand('copy');
+                document.body.removeChild(tempDiv);
+                selection.removeAllRanges();
+                if (success) alert('Synopsis copied to clipboard!');
+            } catch (err) {
+                const formattedText = htmlToFormattedText(output);
+                const textarea = document.createElement('textarea');
+                textarea.value = formattedText;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                try {
+                    textarea.select();
+                    document.execCommand('copy');
+                    alert('Synopsis copied to clipboard (plain text fallback)!');
+                } catch (fallbackErr) {
+                    alert('Unable to copy synopsis. Try copying manually.');
+                } finally {
+                    document.body.removeChild(textarea);
+                }
+            }
+        }
+        function setupAutoSaveOutput() {
+            const output = document.getElementById('output');
+            if (!output) return;
+            output.addEventListener('input', () => {
+                if (saveTimeout) clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(saveOutput, 1500);
+            });
+        }
+        function setupEnterHandler() {
+            document.removeEventListener('keydown', document.enterHandler);
+            document.enterHandler = function(e) {
+                if (e.key !== 'Enter') return;
+                const output = document.getElementById('output');
+                if (!output || document.activeElement !== output) return;
+                const sel = window.getSelection();
+                if (!sel.rangeCount) return;
+                const range = sel.getRangeAt(0);
+                let node = range.startContainer;
+                if (node.nodeType === 3) node = node.parentNode;
+                let li = node;
+                while (li && li.tagName !== 'LI') li = li.parentElement;
+                if (!li) return;
+                e.preventDefault();
+                const parentUl = li.closest('ul');
+                const parentOl = li.closest('ol');
+                if (parentUl) {
+                    const newLi = document.createElement('li');
+                    newLi.appendChild(document.createTextNode('(1)'));
+                    li.parentNode.insertBefore(newLi, li.nextSibling);
+                    const txt = newLi.firstChild;
+                    const newRange = document.createRange();
+                    newRange.setStart(txt, txt.length);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    return;
+                }
+                if (parentOl) {
+                    if (parentOl.getAttribute('type') === 'a') {
+                        if (li.textContent.trim() === '') {
+                            const parentMainLi = parentOl.closest('li');
+                            li.remove();
+                            if (parentMainLi) {
+                                const mainOl = parentMainLi.parentElement;
+                                const newMainLi = document.createElement('li');
+                                newMainLi.innerHTML = ':';
+                                mainOl.insertBefore(newMainLi, parentMainLi.nextSibling);
+                                const newRange = document.createRange();
+                                newRange.selectNodeContents(newMainLi);
+                                newRange.collapse(true);
+                                sel.removeAllRanges();
+                                sel.addRange(newRange);
+                            }
+                        } else {
+                            const newSubLi = document.createElement('li');
+                            newSubLi.innerHTML = '';
+                            parentOl.insertBefore(newSubLi, li.nextSibling);
+                            const newRange = document.createRange();
+                            newRange.selectNodeContents(newSubLi);
+                            newRange.collapse(true);
+                            sel.removeAllRanges();
+                            sel.addRange(newRange);
+                        }
+                        return;
+                    }
+                    if (li.textContent.trim() === '') {
+                        const newMainLi = document.createElement('li');
+                        newMainLi.innerHTML = ':';
+                        parentOl.insertBefore(newMainLi, li.nextSibling);
+                        const newRange = document.createRange();
+                        newRange.selectNodeContents(newMainLi);
+                        newRange.collapse(true);
+                        sel.removeAllRanges();
+                        sel.addRange(newRange);
+                        return;
+                    }
+                    let subOl = li.querySelector('ol[type="a"]');
+                    if (!subOl) {
+                        subOl = document.createElement('ol');
+                        subOl.setAttribute('type', 'a');
+                        li.appendChild(subOl);
+                    }
+                    const newSubLi = document.createElement('li');
+                    newSubLi.innerHTML = '';
+                    subOl.appendChild(newSubLi);
+                    const newRange = document.createRange();
+                    newRange.selectNodeContents(newSubLi);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                    return;
+                }
+            };
+            document.addEventListener('keydown', document.enterHandler);
+        }
+
+        // Updated load handler with expiration check
+        window.addEventListener('load', () => {
+            if (checkExpiration()) return;   // Stop if expired
+
+            loadItems();
+            loadOutput();
+            setupAutoSaveOutput();
+            setupEnterHandler();
+        });
+
+        const originalGenerateSynopsis = generateSynopsis;
+        generateSynopsis = function() {
+            originalGenerateSynopsis.apply(this, arguments);
+            setTimeout(setupEnterHandler, 100);
+        };
+    </script>
+</body>
+</html>
